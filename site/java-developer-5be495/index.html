@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Java Developer · Технічні рекомендації ментора</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../_shared/recs.css" />
+</head>
+<body>
+<script>
+const RECS = {
+  course: 'Java Developer',
+  subtitle: 'Практичні поради ментора до кожного модуля: збирання й тести, бази даних і JDBC, Hibernate, Spring Boot і CI/CD — з прикладами коду й типовими помилками.',
+  modules: [
+    {
+      title: 'Системи збирання та управління залежностями',
+      icon: 'box',
+      intro: 'Системи збирання будуть у кожному проєкті блоку, тож варто одразу розібратися, як ними керувати й що робити, коли залежності конфліктують.',
+      tips: [
+        {
+          title: 'Тримайтеся стандартної структури тек',
+          body: [
+            'І Maven, і Gradle очікують код у <code>src/main/java</code>, ресурси в <code>src/main/resources</code>, а тести в <code>src/test/java</code>. Якщо класти файли деінде, система збирання їх просто не побачить, і тести «зникнуть».'
+          ]
+        },
+        {
+          title: 'Позначайте тестові залежності scope test',
+          body: [
+            'JUnit, Mockito та інші бібліотеки для тестів не повинні потрапляти в готовий застосунок. У Maven для цього є <code>&lt;scope&gt;test&lt;/scope&gt;</code>, у Gradle конфігурація <code>testImplementation</code>.',
+            {
+              code: `&lt;dependency&gt;
+    &lt;groupId&gt;org.junit.jupiter&lt;/groupId&gt;
+    &lt;artifactId&gt;junit-jupiter&lt;/artifactId&gt;
+    &lt;version&gt;...&lt;/version&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;`
+            }
+          ]
+        },
+        {
+          title: 'Комітьте Gradle Wrapper',
+          body: [
+            'Файли <code>gradlew</code>, <code>gradlew.bat</code> і тека <code>gradle/wrapper</code> дозволяють зібрати проєкт тією самою версією Gradle на будь-якій машині, навіть без встановленого Gradle. Запускайте збірку через <code>./gradlew build</code>, а не через глобальний <code>gradle</code>.'
+          ]
+        },
+        {
+          title: 'Після змін у pom.xml оновлюйте проєкт в IDEA',
+          body: [
+            'IntelliJ IDEA не завжди підхоплює нові залежності автоматично. Якщо імпорт підсвічується червоним, натисніть кнопку Load Maven Changes (або Reload у вікні Maven чи Gradle).'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Конфлікт версій залежностей',
+        body: 'Дві бібліотеки можуть тягнути різні версії однієї залежності, і тоді виникають дивні <code>NoSuchMethodError</code> під час виконання. Команда <code>mvn dependency:tree</code> (або <code>./gradlew dependencies</code>) показує, звідки прийшла кожна версія.'
+      },
+      links: [
+        {
+          text: 'Maven Getting Started Guide',
+          url: 'https://maven.apache.org/guides/getting-started/'
+        },
+        {
+          text: 'Gradle User Manual',
+          url: 'https://docs.gradle.org/current/userguide/userguide.html'
+        },
+        {
+          text: 'Пошук бібліотек у Maven Central',
+          url: 'https://central.sonatype.com/'
+        }
+      ]
+    },
+    {
+      title: 'Якість коду',
+      icon: 'check',
+      intro: 'Якість коду стає помітною, коли проєкт росте, а над ним працює команда. Ось інструменти й звички, що допомагають тримати код чистим.',
+      tips: [
+        {
+          title: 'Рефакторинг інструментами IDE',
+          body: [
+            'IntelliJ IDEA безпечно перейменовує класи й змінні по всьому проєкту (Shift+F6) і виносить фрагмент у метод (Ctrl+Alt+M на Windows/Linux, Cmd+Alt+M на macOS). Це надійніше за ручні правки, бо IDE оновлює всі використання.'
+          ]
+        },
+        {
+          title: 'Статичний аналізатор прямо в IDE',
+          body: [
+            'Плагін SonarLint (тепер називається SonarQube for IDE) підсвічує потенційні баги й «запахи коду» прямо під час написання. Спробуйте прогнати через нього свій проєкт: більшість зауважень пояснюються з прикладами.'
+          ]
+        },
+        {
+          title: 'Маленькі методи з ясними назвами',
+          body: [
+            'Якщо метод не вміщається на екран або в його назві хочеться написати «і» (<code>validateAndSave</code>), його варто розділити. Метод з назвою, що описує дію, часто не потребує коментаря.'
+          ]
+        },
+        {
+          title: 'Перегляньте свій diff перед рев\'ю',
+          body: [
+            'Перш ніж віддавати код на перевірку, перегляньте зміни самостійно у вкладці Commit в IDEA чи через <code>git diff</code>. Так ловляться забуті <code>println</code>, закоментований код і зайві файли.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Рефакторинг без тестів',
+        body: 'Великий рефакторинг без тестів легко змінює поведінку непомітно для вас. Спершу переконайтеся, що є тести на код, який змінюєте, і запускайте їх після кожного кроку.'
+      },
+      links: [
+        {
+          text: 'Refactoring code (IntelliJ IDEA)',
+          url: 'https://www.jetbrains.com/help/idea/refactoring-source-code.html'
+        }
+      ]
+    },
+    {
+      title: 'Unit тести',
+      icon: 'target',
+      intro: 'Тести є страховкою для всього, що ви писатимете далі. Кілька правил, щоб тести було легко читати й підтримувати.',
+      tips: [
+        {
+          title: 'Структура Arrange-Act-Assert',
+          body: [
+            'Розділяйте тест на три частини: підготовка даних, виклик методу, перевірка результату. Так з одного погляду видно, що перевіряє тест.',
+            {
+              code: `<span class="kw">@Test</span>
+<span class="kw">void</span> calculatesTotalWithDiscount() {
+    <span class="cm">// Arrange</span>
+    Cart cart = <span class="kw">new</span> Cart(List.of(<span class="nm">100</span>, <span class="nm">200</span>));
+    <span class="cm">// Act</span>
+    <span class="kw">int</span> total = cart.totalWithDiscount(<span class="nm">10</span>);
+    <span class="cm">// Assert</span>
+    assertEquals(<span class="nm">270</span>, total);
+}`
+            }
+          ]
+        },
+        {
+          title: 'Перевіряйте й винятки',
+          body: [
+            'Тест на помилкові вхідні дані не менш важливий, ніж на правильні. У JUnit 5 для цього є <code>assertThrows</code>.',
+            {
+              code: `assertThrows(IllegalArgumentException.<span class="kw">class</span>,
+        () -&gt; <span class="kw">new</span> Cart(<span class="kw">null</span>));`
+            }
+          ]
+        },
+        {
+          title: 'Мокайте залежності, а не клас, який тестуєте',
+          body: [
+            'Mockito замінює зовнішні залежності (репозиторій, клієнт API) керованими заглушками. Сам клас під тестом має бути справжнім, інакше ви перевіряєте мок. Підключайте розширення через <code>@ExtendWith(MockitoExtension.class)</code>.',
+            {
+              code: `<span class="kw">@Mock</span> UserRepository repository;
+<span class="kw">@InjectMocks</span> UserService service;
+
+when(repository.findById(<span class="nm">1L</span>)).thenReturn(Optional.of(user));`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Тести залежать один від одного',
+        body: 'Якщо тест проходить лише після іншого, бо той підготував дані, порядок запуску може все зламати. Кожен тест має сам готувати все потрібне. Для спільної підготовки є <code>@BeforeEach</code>.'
+      },
+      links: [
+        {
+          text: 'JUnit User Guide',
+          url: 'https://junit.org/junit5/docs/current/user-guide/'
+        },
+        {
+          text: 'Mockito',
+          url: 'https://site.mockito.org/'
+        }
+      ]
+    },
+    {
+      title: 'Реляційні СУБД. Мова SQL',
+      icon: 'db',
+      intro: 'SQL знадобиться в кожному модулі з базами даних, тож варто виробити кілька безпечних звичок уже зараз.',
+      tips: [
+        {
+          title: 'H2 в пам\'яті для експериментів',
+          body: [
+            'Режим <code>jdbc:h2:mem:testdb</code> створює базу прямо в пам\'яті: вона з\'являється під час запуску й зникає після зупинки програми. Ідеально для навчальних запитів і тестів, бо зіпсувати нічого не вийде.'
+          ]
+        },
+        {
+          title: 'Спершу SELECT, потім UPDATE чи DELETE',
+          body: [
+            'Перш ніж змінювати чи видаляти рядки, виконайте <code>SELECT</code> з тією самою умовою <code>WHERE</code> і перегляньте, що саме зачепить запит. Це займає кілька секунд і рятує дані.',
+            {
+              code: `<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> last_login &lt; <span class="st">'2024-01-01'</span>;
+<span class="cm">-- переконалися, що це ті рядки</span>
+<span class="kw">DELETE</span> <span class="kw">FROM</span> users <span class="kw">WHERE</span> last_login &lt; <span class="st">'2024-01-01'</span>;`
+            }
+          ]
+        },
+        {
+          title: 'Зв\'язки через ключі',
+          body: [
+            '<code>PRIMARY KEY</code> унікально ідентифікує рядок, а <code>FOREIGN KEY</code> гарантує, що посилання веде на існуючий запис. Без зовнішніх ключів база дозволить замовлення неіснуючого клієнта, і помилку буде важко знайти.',
+            {
+              code: `<span class="kw">CREATE</span> <span class="kw">TABLE</span> orders (
+    id <span class="kw">BIGINT</span> <span class="kw">PRIMARY</span> <span class="kw">KEY</span>,
+    customer_id <span class="kw">BIGINT</span> <span class="kw">REFERENCES</span> customers(id)
+);`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'UPDATE чи DELETE без WHERE',
+        body: 'Запит без умови змінює або видаляє всі рядки таблиці. Візьміть за правило спершу писати <code>WHERE</code>, а вже потім решту запиту.'
+      },
+      links: [
+        {
+          text: 'H2 Database',
+          url: 'https://www.h2database.com/html/main.html'
+        }
+      ]
+    },
+    {
+      title: 'Складність алгоритмів',
+      icon: 'chart',
+      intro: 'Оцінка складності допомагає обирати рішення, яке не «ляже» на великих даних. Ось як прикидати її без формул.',
+      tips: [
+        {
+          title: 'Рахуйте вкладені цикли',
+          body: [
+            'Один цикл по n елементах дає O(n), цикл у циклі по тих самих даних дає O(n²). Для 1 000 елементів різниця між тисячею й мільйоном операцій. Це найшвидший спосіб оцінити свій код.'
+          ]
+        },
+        {
+          title: 'Структура даних змінює складність',
+          body: [
+            '<code>list.contains(x)</code> перебирає список за O(n), а <code>set.contains(x)</code> у <code>HashSet</code> працює в середньому за O(1). Якщо в циклі шукаєте елементи в списку, заміна на <code>HashSet</code> часто перетворює O(n²) на O(n).'
+          ]
+        },
+        {
+          title: 'Мемоізація в рекурсії',
+          body: [
+            'Наївна рекурсія для чисел Фібоначчі рахує ті самі значення знову й знову, і складність росте експоненційно. Якщо зберігати вже пораховані результати в масиві чи мапі, вистачає лінійного часу. Це і є базова ідея динамічного програмування.',
+            {
+              code: `<span class="kw">long</span> fib(<span class="kw">int</span> n, <span class="kw">long</span>[] memo) {
+    <span class="kw">if</span> (n &lt;= <span class="nm">1</span>) <span class="kw">return</span> n;
+    <span class="kw">if</span> (memo[n] != <span class="nm">0</span>) <span class="kw">return</span> memo[n];
+    <span class="kw">return</span> memo[n] = fib(n - <span class="nm">1</span>, memo) + fib(n - <span class="nm">2</span>, memo);
+}`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Рекурсія без базового випадку',
+        body: 'Якщо умова виходу не спрацьовує, рекурсія йде вглиб, доки не закінчиться стек, і програма падає зі <code>StackOverflowError</code>. Спершу напишіть базовий випадок і перевірте, що кожен виклик справді до нього наближається.'
+      },
+      links: [
+        {
+          text: 'Big-O Cheat Sheet',
+          url: 'https://www.bigocheatsheet.com/'
+        }
+      ]
+    },
+    {
+      title: 'Основи JDBC',
+      icon: 'plug',
+      intro: 'JDBC є фундаментом усієї роботи з базами в Java: Hibernate і Spring Data теж працюють поверх нього. Тому базові правила тут особливо важливі.',
+      tips: [
+        {
+          title: 'Закривайте з\'єднання через try-with-resources',
+          body: [
+            '<code>Connection</code>, <code>Statement</code> і <code>ResultSet</code> тримають ресурси бази. Відкривайте їх у try-with-resources, і вони закриються навіть у разі помилки.',
+            {
+              code: `<span class="kw">try</span> (Connection conn = DriverManager.getConnection(url, user, password);
+     Statement st = conn.createStatement();
+     ResultSet rs = st.executeQuery(<span class="st">"SELECT name FROM users"</span>)) {
+    <span class="kw">while</span> (rs.next()) {
+        System.out.println(rs.getString(<span class="st">"name"</span>));
+    }
+}`
+            }
+          ]
+        },
+        {
+          title: 'Формат URL підключення',
+          body: [
+            'Для MySQL URL виглядає як <code>jdbc:mysql://localhost:3306/mydb</code>, для H2 в пам\'яті як <code>jdbc:h2:mem:testdb</code>. Помилка <code>No suitable driver</code> зазвичай означає, що драйвер не додано в залежності або URL написано з помилкою.'
+          ]
+        },
+        {
+          title: 'Пароль від бази не в коді',
+          body: [
+            'Не зберігайте логін і пароль прямо в коді, бо вони потраплять у репозиторій. Читайте їх зі змінних середовища (<code>System.getenv</code>) або з файлу налаштувань, доданого в <code>.gitignore</code>.',
+            {
+              code: 'String password = System.getenv(<span class="st">"DB_PASSWORD"</span>);'
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Читання ResultSet без next()',
+        body: 'Курсор <code>ResultSet</code> спочатку стоїть перед першим рядком. Якщо одразу викликати <code>rs.getString(...)</code>, отримаєте <code>SQLException</code>. Спершу <code>rs.next()</code>, і лише якщо він повернув <code>true</code>, читайте дані.'
+      },
+      links: [
+        {
+          text: 'JDBC Basics (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/jdbc/basics/'
+        }
+      ]
+    },
+    {
+      title: 'Розширена робота з JDBC',
+      icon: 'layers',
+      intro: 'PreparedStatement, пакетні оновлення й транзакції відрізняють навчальний код від того, що можна запускати на реальних даних.',
+      tips: [
+        {
+          title: 'Параметри PreparedStatement нумеруються з 1',
+          body: [
+            'На відміну від масивів, перший плейсхолдер <code>?</code> має індекс 1. Помилка з нулем дає <code>SQLException</code> про неправильний індекс параметра.',
+            {
+              code: `String sql = <span class="st">"SELECT * FROM users WHERE email = ? AND active = ?"</span>;
+<span class="kw">try</span> (PreparedStatement ps = conn.prepareStatement(sql)) {
+    ps.setString(<span class="nm">1</span>, email);
+    ps.setBoolean(<span class="nm">2</span>, <span class="kw">true</span>);
+    ResultSet rs = ps.executeQuery();
+}`
+            }
+          ]
+        },
+        {
+          title: 'Batch для масових вставок',
+          body: [
+            'Якщо треба вставити сотні рядків, не виконуйте запит по одному. <code>addBatch()</code> накопичує команди, а <code>executeBatch()</code> відправляє їх разом, і це суттєво швидше.',
+            {
+              code: `<span class="kw">for</span> (User u : users) {
+    ps.setString(<span class="nm">1</span>, u.getName());
+    ps.addBatch();
+}
+ps.executeBatch();`
+            }
+          ]
+        },
+        {
+          title: 'Транзакція: усе або нічого',
+          body: [
+            'Коли кілька операцій мають виконатися разом (списати з одного рахунку й зарахувати на інший), вимкніть автокоміт, а наприкінці викличте <code>commit()</code>. Якщо щось пішло не так, <code>rollback()</code> поверне базу до початкового стану.',
+            {
+              code: `conn.setAutoCommit(<span class="kw">false</span>);
+<span class="kw">try</span> {
+    withdraw(conn, from, amount);
+    deposit(conn, to, amount);
+    conn.commit();
+} <span class="kw">catch</span> (SQLException e) {
+    conn.rollback();
+    <span class="kw">throw</span> e;
+}`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Склеювання SQL з даними користувача',
+        body: 'Запит на кшталт <code>"... WHERE name = \'" + name + "\'"</code> відкриває шлях до SQL-ін\'єкцій і ламається на першому апострофі в імені. Значення завжди передавайте через параметри <code>PreparedStatement</code>.'
+      },
+      links: [
+        {
+          text: 'Using Prepared Statements (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html'
+        },
+        {
+          text: 'Using Transactions (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html'
+        }
+      ]
+    },
+    {
+      title: 'CRUD, міграції баз даних',
+      icon: 'up',
+      intro: 'Міграції роблять структуру бази такою ж керованою, як і код. Кілька правил Flyway, які варто знати з самого початку.',
+      tips: [
+        {
+          title: 'Правильні імена файлів міграцій',
+          body: [
+            'Flyway шукає скрипти за шаблоном <code>V&lt;версія&gt;__&lt;опис&gt;.sql</code>, і між версією та описом стоїть два підкреслення. Файл з одним підкресленням Flyway просто не побачить.',
+            {
+              code: `src/main/resources/db/migration/
+    V1__create_users_table.sql
+    V2__add_email_to_users.sql`
+            }
+          ]
+        },
+        {
+          title: 'Одна міграція відповідає одній зміні',
+          body: [
+            'Створення таблиці, нова колонка, індекс: краще окремими файлами. Так легше зрозуміти історію змін і знайти, яка міграція спричинила проблему.'
+          ]
+        },
+        {
+          title: 'Розділяйте доступ до даних і логіку',
+          body: [
+            'CRUD-операції з сутністю зручно зібрати в окремий клас (DAO чи репозиторій), а бізнес-правила тримати в сервісі. Тоді зміна способу зберігання не зачіпає решту коду.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Редагування вже застосованої міграції',
+        body: 'Flyway зберігає контрольну суму кожного виконаного скрипту. Якщо змінити такий файл, під час наступного запуску буде помилка валідації. Виправлення структури робіть новою міграцією з наступним номером.'
+      },
+      links: [
+        {
+          text: 'Документація Flyway',
+          url: 'https://documentation.red-gate.com/fd'
+        }
+      ]
+    },
+    {
+      title: 'Клієнт-серверна архітектура, протокол HTTP',
+      icon: 'globe',
+      intro: 'Розуміння HTTP допомагає налагоджувати будь-який веб-застосунок, а не гадати, чому сторінка не відкривається.',
+      tips: [
+        {
+          title: 'Вкладка Network у DevTools',
+          body: [
+            'У браузері натисніть F12 і відкрийте вкладку Network. Там видно кожен запит: метод, адресу, статус, заголовки й тіло відповіді. Це перше місце, куди варто дивитися, коли щось не працює.'
+          ]
+        },
+        {
+          title: 'curl для швидких перевірок',
+          body: [
+            'Утиліта <code>curl</code> надсилає запит з терміналу. Прапорець <code>-i</code> показує ще й заголовки відповіді, тож одразу видно статус і <code>Content-Type</code>.',
+            {
+              code: 'curl -i https://example.com'
+            }
+          ]
+        },
+        {
+          title: 'Читайте класи статус-кодів',
+          body: [
+            '2xx означає успіх, 3xx вказує на перенаправлення, 4xx на помилку в запиті клієнта, 5xx на збій сервера. Вже перша цифра підказує, де шукати проблему: у вашому запиті чи на сервері.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Плутанина між 401 і 403',
+        body: '<code>401 Unauthorized</code> означає, що сервер не знає, хто ви: треба автентифікуватися. <code>403 Forbidden</code> означає, що сервер знає, хто ви, але доступу не дає. Від цього залежить, що виправляти: логін чи права.'
+      },
+      links: [
+        {
+          text: 'An overview of HTTP (MDN)',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview'
+        }
+      ]
+    },
+    {
+      title: 'Сервлети: основи',
+      icon: 'server',
+      intro: 'Сервлети показують, як веб працює «під капотом» Spring. Кілька речей, які часто збивають з пантелику на старті.',
+      tips: [
+        {
+          title: 'javax чи jakarta: перевірте версію Tomcat',
+          body: [
+            'Починаючи з Tomcat 10, пакет сервлетів називається <code>jakarta.servlet</code>, а не <code>javax.servlet</code>. Якщо імпорти й версія сервера не збігаються, сервлет не завантажиться, а ви побачите 404 чи <code>ClassNotFoundException</code>. Дивіться, яку версію використовує ваш проєкт.'
+          ]
+        },
+        {
+          title: 'Мапінг через анотацію @WebServlet',
+          body: [
+            'Адресу сервлета зручно задати прямо над класом, без <code>web.xml</code>.',
+            {
+              code: `<span class="kw">@WebServlet</span>(<span class="st">"/hello"</span>)
+<span class="kw">public</span> <span class="kw">class</span> HelloServlet <span class="kw">extends</span> HttpServlet {
+    <span class="kw">@Override</span>
+    <span class="kw">protected</span> <span class="kw">void</span> doGet(HttpServletRequest req, HttpServletResponse resp) <span class="kw">throws</span> IOException {
+        resp.getWriter().write(<span class="st">"Hello"</span>);
+    }
+}`
+            }
+          ]
+        },
+        {
+          title: 'Один екземпляр на всі запити',
+          body: [
+            'Контейнер зазвичай створює один об\'єкт сервлету й обробляє ним усі запити паралельно. Тому дані конкретного запиту не можна тримати в полях класу: зберігайте їх у локальних змінних методу.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Стан запиту в полях сервлету',
+        body: 'Якщо записати ім\'я користувача в поле сервлету, два одночасні запити можуть побачити дані один одного. Використовуйте локальні змінні, атрибути запиту чи сесію.'
+      },
+      links: [
+        {
+          text: 'Apache Tomcat',
+          url: 'https://tomcat.apache.org/'
+        }
+      ]
+    },
+    {
+      title: 'Сервлети: Cookies, Templates, Front Controller',
+      icon: 'cookie',
+      intro: 'Cookies, сесії й шаблонізатори роблять веб-застосунок «пам\'ятливим». Ось на що звернути увагу, щоб це було ще й безпечно.',
+      tips: [
+        {
+          title: 'Атрибути HttpOnly і Secure для cookie',
+          body: [
+            '<code>HttpOnly</code> не дає JavaScript на сторінці прочитати cookie, і це захищає від крадіжки сесії через XSS. <code>Secure</code> дозволяє надсилати cookie лише через HTTPS.',
+            {
+              code: `Cookie cookie = <span class="kw">new</span> Cookie(<span class="st">"theme"</span>, <span class="st">"dark"</span>);
+cookie.setHttpOnly(<span class="kw">true</span>);
+cookie.setSecure(<span class="kw">true</span>);
+resp.addCookie(cookie);`
+            }
+          ]
+        },
+        {
+          title: 'Post/Redirect/Get після форми',
+          body: [
+            'Після обробки POST-запиту робіть редірект на GET-сторінку. Інакше оновлення сторінки в браузері повторно відправить форму, наприклад створить друге однакове замовлення.',
+            {
+              code: 'resp.sendRedirect(<span class="st">"/orders"</span>);'
+            }
+          ]
+        },
+        {
+          title: 'th:text замість th:utext',
+          body: [
+            'У Thymeleaf <code>th:text</code> екранує HTML, тож введений користувачем <code>&lt;script&gt;</code> відобразиться як звичайний текст і не виконається. <code>th:utext</code> виводить HTML як є, тому для даних від користувача його не використовуйте.',
+            {
+              code: '&lt;p th:text="${comment}"&gt;Коментар&lt;/p&gt;'
+            }
+          ]
+        },
+        {
+          title: 'Закривайте сесію при виході',
+          body: [
+            'Під час логауту викликайте <code>session.invalidate()</code>, щоб дані сесії не лишалися на сервері й не могли бути використані повторно.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Чутливі дані в cookie',
+        body: 'Cookie зберігається в браузері, і користувач може її прочитати й змінити. Ролі, суми чи паролі туди класти не можна. У cookie лише ідентифікатор, а самі дані на сервері в сесії.'
+      },
+      links: [
+        {
+          text: 'Thymeleaf Documentation',
+          url: 'https://www.thymeleaf.org/documentation.html'
+        }
+      ]
+    },
+    {
+      title: 'Огляд REST API',
+      icon: 'code',
+      intro: 'REST API є мовою спілкування між фронтендом і бекендом. Узгоджені правила роблять ваш API зрозумілим без документації.',
+      tips: [
+        {
+          title: 'Іменники в URL, дія в HTTP-методі',
+          body: [
+            'Адреса описує ресурс, а метод каже, що з ним зробити. Колекції зазвичай називають у множині.',
+            {
+              code: `GET    /orders        список замовлень
+GET    /orders/42     одне замовлення
+POST   /orders        створити
+PUT    /orders/42     замінити
+DELETE /orders/42     видалити`
+            }
+          ]
+        },
+        {
+          title: 'Відповідайте правильними статус-кодами',
+          body: [
+            '<code>201 Created</code> після створення ресурсу, <code>400 Bad Request</code> для некоректних даних, <code>404 Not Found</code>, якщо ресурсу немає. Клієнт API орієнтується на код, а не на текст у тілі.'
+          ]
+        },
+        {
+          title: 'Тестуйте API в IDEA',
+          body: [
+            'У IntelliJ IDEA можна створити файл з розширенням <code>.http</code>, описати запити й запускати їх кнопкою поруч. Те саме вміє Postman. Так перевірка API не потребує фронтенду.',
+            {
+              code: `GET http://localhost:8080/orders/42
+Accept: application/json`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'На все відповідати 200',
+        body: 'Якщо помилка повертається зі статусом 200 і текстом «error» у тілі, клієнт вважатиме запит успішним. Помилки мають мати коди 4xx чи 5xx.'
+      },
+      links: [
+        {
+          text: 'HTTP request methods (MDN)',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods'
+        }
+      ]
+    },
+    {
+      title: 'ORM. Hibernate',
+      icon: 'var',
+      intro: 'Hibernate бере на себе рутину SQL, але важливо бачити, що він робить за вас. Кілька налаштувань і звичок для старту.',
+      tips: [
+        {
+          title: 'Вмикайте показ SQL',
+          body: [
+            'Налаштування <code>hibernate.show_sql</code> і <code>hibernate.format_sql</code> виводять у консоль запити, які генерує Hibernate. Так видно, скільки запитів насправді йде в базу, і простіше зрозуміти помилки мапінгу.',
+            {
+              code: `hibernate.show_sql=true
+hibernate.format_sql=true`
+            }
+          ]
+        },
+        {
+          title: 'Обережно з hbm2ddl.auto',
+          body: [
+            'Значення <code>create</code> і <code>create-drop</code> щоразу перестворюють таблиці, тобто стирають дані. Для навчальних експериментів це зручно, але для бази з потрібними даними беріть <code>validate</code> або керуйте схемою через міграції.'
+          ]
+        },
+        {
+          title: 'Одна SessionFactory на застосунок',
+          body: [
+            '<code>SessionFactory</code> створювати дорого, тож її роблять один раз на весь застосунок. А <code>Session</code>, навпаки, легка й відкривається на одну операцію чи транзакцію, а потім закривається.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Забути @Id',
+        body: 'Кожна сутність з анотацією <code>@Entity</code> повинна мати поле з <code>@Id</code>. Без нього Hibernate не запуститься й повідомить, що для сутності не вказано ідентифікатор.'
+      },
+      links: [
+        {
+          text: 'Hibernate ORM Documentation',
+          url: 'https://hibernate.org/orm/documentation/'
+        }
+      ]
+    },
+    {
+      title: 'Hibernate Entity Mapping. HQL',
+      icon: 'grid',
+      intro: 'Мапінг зв\'язків і HQL дають силу Hibernate, але саме тут найчастіше з\'являються проблеми з продуктивністю.',
+      tips: [
+        {
+          title: 'Розумійте LAZY і EAGER',
+          body: [
+            'За <code>LAZY</code> пов\'язані дані підвантажуються лише під час першого звернення до них, за <code>EAGER</code> одразу. Для колекцій (<code>@OneToMany</code>) за замовчуванням діє <code>LAZY</code>. Звернення до лінивої колекції після закриття сесії дає <code>LazyInitializationException</code>.'
+          ]
+        },
+        {
+          title: 'Проблема N+1 і JOIN FETCH',
+          body: [
+            'Якщо отримати 100 замовлень, а потім у циклі звертатися до клієнта кожного, Hibernate може виконати ще 100 запитів. <code>JOIN FETCH</code> у HQL завантажує все одним запитом.',
+            {
+              code: '<span class="kw">SELECT</span> o <span class="kw">FROM</span> Order o <span class="kw">JOIN</span> <span class="kw">FETCH</span> o.customer'
+            }
+          ]
+        },
+        {
+          title: 'Іменовані параметри в HQL',
+          body: [
+            'Передавайте значення через параметри <code>:name</code>, як у <code>PreparedStatement</code>. Це безпечно й читається краще.',
+            {
+              code: `List&lt;User&gt; users = session.createQuery(
+        <span class="st">"FROM User u WHERE u.email = :email"</span>, User.<span class="kw">class</span>)
+    .setParameter(<span class="st">"email"</span>, email)
+    .getResultList();`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Ім\'я таблиці замість імені сутності',
+        body: 'HQL працює з класами й полями, а не з таблицями й колонками. Якщо клас <code>User</code> мапиться на таблицю <code>users</code>, у запиті пишемо <code>FROM User</code>. Регістр теж має значення, як в іменах класів.'
+      },
+      links: [
+        {
+          text: 'Hibernate ORM Documentation',
+          url: 'https://hibernate.org/orm/documentation/'
+        }
+      ]
+    },
+    {
+      title: 'Spring Boot: Core',
+      icon: 'leaf',
+      intro: 'Spring Core пояснює, як Spring збирає застосунок з окремих бінів. Ось практики, яких дотримуються в більшості команд.',
+      tips: [
+        {
+          title: 'Впроваджуйте залежності через конструктор',
+          body: [
+            'Конструкторна ін\'єкція дає змогу зробити поля <code>final</code>, а клас легко створити в тесті з моками. Якщо конструктор один, анотація <code>@Autowired</code> над ним не потрібна.',
+            {
+              code: `<span class="kw">@Service</span>
+<span class="kw">public</span> <span class="kw">class</span> OrderService {
+    <span class="kw">private</span> <span class="kw">final</span> OrderRepository repository;
+
+    <span class="kw">public</span> OrderService(OrderRepository repository) {
+        <span class="kw">this</span>.repository = repository;
+    }
+}`
+            }
+          ]
+        },
+        {
+          title: 'Біни за замовчуванням є singleton',
+          body: [
+            'Spring створює один екземпляр біна на весь застосунок, і ним користуються всі запити одночасно. Тому не зберігайте в полях біна дані конкретного користувача чи запиту.'
+          ]
+        },
+        {
+          title: 'Стартовий проєкт з start.spring.io',
+          body: [
+            'Spring Initializr генерує готовий проєкт з потрібними стартерами й правильною структурою. Те саме доступно в IntelliJ IDEA через New Project.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Циклічні залежності',
+        body: 'Якщо A залежить від B, а B від A, починаючи зі Spring Boot 2.6 застосунок за замовчуванням не запуститься. Це сигнал переглянути дизайн: часто спільну логіку варто винести в третій клас.'
+      },
+      links: [
+        {
+          text: 'The IoC Container (Spring Framework)',
+          url: 'https://docs.spring.io/spring-framework/reference/core/beans.html'
+        },
+        {
+          text: 'Spring Initializr',
+          url: 'https://start.spring.io/'
+        }
+      ]
+    },
+    {
+      title: 'Spring Boot: MVC',
+      icon: 'list',
+      intro: 'Spring MVC закриває більшість задач веб-бекенду. Кілька практик, які зроблять контролери чистішими.',
+      tips: [
+        {
+          title: 'Скорочені анотації для методів',
+          body: [
+            'Замість <code>@RequestMapping(method = RequestMethod.GET)</code> пишіть <code>@GetMapping</code>, а також <code>@PostMapping</code>, <code>@PutMapping</code>, <code>@DeleteMapping</code>. Код коротший, а метод видно одразу.'
+          ]
+        },
+        {
+          title: '@PathVariable чи @RequestParam',
+          body: [
+            '<code>@PathVariable</code> бере значення з самого шляху (<code>/users/42</code>), а <code>@RequestParam</code> з параметрів запиту (<code>/users?role=admin</code>). Ідентифікатор ресурсу зазвичай у шляху, фільтри в параметрах.',
+            {
+              code: `<span class="kw">@GetMapping</span>(<span class="st">"/users/{id}"</span>)
+<span class="kw">public</span> UserDto getUser(<span class="kw">@PathVariable</span> Long id) { ... }
+
+<span class="kw">@GetMapping</span>(<span class="st">"/users"</span>)
+<span class="kw">public</span> List&lt;UserDto&gt; find(<span class="kw">@RequestParam</span>(required = <span class="kw">false</span>) String role) { ... }`
+            }
+          ]
+        },
+        {
+          title: 'Валідація вхідних даних',
+          body: [
+            'Підключіть <code>spring-boot-starter-validation</code>, додайте анотації на кшталт <code>@NotBlank</code> чи <code>@Email</code> до полів DTO і <code>@Valid</code> перед параметром контролера. Некоректні дані відсіються ще до вашої логіки.',
+            {
+              code: `<span class="kw">@PostMapping</span>(<span class="st">"/users"</span>)
+<span class="kw">public</span> UserDto create(<span class="kw">@Valid</span> <span class="kw">@RequestBody</span> CreateUserRequest request) { ... }`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Повертати сутність напряму',
+        body: 'Якщо контролер повертає <code>@Entity</code>, у відповідь можуть потрапити зайві поля (наприклад, хеш пароля) або виникне помилка через ліниві зв\'язки. Повертайте окремий DTO лише з потрібними полями.'
+      },
+      links: [
+        {
+          text: 'Spring Web MVC',
+          url: 'https://docs.spring.io/spring-framework/reference/web/webmvc.html'
+        }
+      ]
+    },
+    {
+      title: 'Spring Data',
+      icon: 'file',
+      intro: 'Spring Data прибирає більшість шаблонного коду доступу до даних. Ось як отримати від нього максимум і не наступити на типові граблі.',
+      tips: [
+        {
+          title: 'Похідні методи запитів',
+          body: [
+            'Spring Data будує запит з назви методу. <code>findByEmail</code>, <code>findByAgeGreaterThan</code>, <code>existsByUsername</code> працюють без жодного рядка реалізації.',
+            {
+              code: `<span class="kw">public</span> <span class="kw">interface</span> UserRepository <span class="kw">extends</span> JpaRepository&lt;User, Long&gt; {
+    Optional&lt;User&gt; findByEmail(String email);
+    List&lt;User&gt; findByAgeGreaterThan(<span class="kw">int</span> age);
+}`
+            }
+          ]
+        },
+        {
+          title: '@Query для складніших запитів',
+          body: [
+            'Якщо назва методу стає задовгою, напишіть запит явно в анотації <code>@Query</code>. Це читається краще, ніж <code>findByStatusAndCreatedAtAfterAndCustomerCity</code>.'
+          ]
+        },
+        {
+          title: '@Transactional на рівні сервісу',
+          body: [
+            'Транзакцію зазвичай відкривають на методі сервісу, який виконує кілька операцій з базою. Тоді вони або виконаються разом, або разом відкотяться.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Виклик @Transactional-методу з того самого класу',
+        body: 'Spring реалізує транзакції через проксі. Якщо один метод класу викликає інший метод того самого класу з <code>@Transactional</code>, виклик іде повз проксі, і нова транзакція не відкривається. Такий метод варто винести в окремий бін.'
+      },
+      links: [
+        {
+          text: 'Spring Data JPA Reference',
+          url: 'https://docs.spring.io/spring-data/jpa/reference/'
+        }
+      ]
+    },
+    {
+      title: 'Spring Boot: Security',
+      icon: 'lock',
+      intro: 'Безпека є тим модулем, де застарілі туторіали шкодять найбільше. Ось на що звернути увагу в сучасному Spring Security.',
+      tips: [
+        {
+          title: 'Конфігурація через бін SecurityFilterChain',
+          body: [
+            'У Spring Security 6 клас <code>WebSecurityConfigurerAdapter</code> видалено. Налаштування тепер описують бін <code>SecurityFilterChain</code>. Якщо приклад з інтернету наслідує <code>WebSecurityConfigurerAdapter</code>, він застарів.',
+            {
+              code: `<span class="kw">@Bean</span>
+SecurityFilterChain filterChain(HttpSecurity http) <span class="kw">throws</span> Exception {
+    http.authorizeHttpRequests(auth -&gt; auth
+            .requestMatchers(<span class="st">"/public/**"</span>).permitAll()
+            .anyRequest().authenticated())
+        .formLogin(Customizer.withDefaults());
+    <span class="kw">return</span> http.build();
+}`
+            }
+          ]
+        },
+        {
+          title: 'Паролі лише в хешованому вигляді',
+          body: [
+            'Ніколи не зберігайте паролі у відкритому вигляді. <code>BCryptPasswordEncoder</code> хешує пароль із сіллю, і навіть два однакові паролі дадуть різні хеші.',
+            {
+              code: `<span class="kw">@Bean</span>
+PasswordEncoder passwordEncoder() {
+    <span class="kw">return</span> <span class="kw">new</span> BCryptPasswordEncoder();
+}`
+            }
+          ]
+        },
+        {
+          title: 'Згенерований пароль у консолі',
+          body: [
+            'Якщо додати стартер безпеки й нічого не налаштувати, Spring Boot створює користувача <code>user</code> і виводить згенерований пароль у лог під час запуску. Це зручно для першої перевірки, але не для реального застосунку.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Вимкнути CSRF «щоб запрацювало»',
+        body: 'Вимкнення CSRF прибирає помилку 403 для POST-запитів, але відкриває вразливість для застосунків з формами й сесіями. Робіть це лише свідомо, наприклад для stateless REST API з токенами.'
+      },
+      links: [
+        {
+          text: 'Spring Security Reference',
+          url: 'https://docs.spring.io/spring-security/reference/'
+        }
+      ]
+    },
+    {
+      title: 'CI/CD процеси',
+      icon: 'loop',
+      intro: 'CI/CD перетворює «у мене працює» на «працює в усіх». Найпростіше почати з автоматичного запуску тестів на GitHub.',
+      tips: [
+        {
+          title: 'Перший workflow у GitHub Actions',
+          body: [
+            'Створіть файл <code>.github/workflows/ci.yml</code>, і GitHub запускатиме збірку й тести на кожен пуш і pull request. Результат видно прямо в репозиторії: зелена галочка або червоний хрестик.',
+            {
+              code: `name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: mvn -B test`
+            }
+          ]
+        },
+        {
+          title: 'Секрети не в репозиторії',
+          body: [
+            'Паролі, токени й ключі для деплою зберігайте в Settings → Secrets and variables → Actions і звертайтеся до них у workflow через <code>${{ secrets.NAME }}</code>. У коді й yml-файлах їх бути не повинно.'
+          ]
+        },
+        {
+          title: 'Маленькі й часті коміти',
+          body: [
+            'CI найкорисніший, коли зміни невеликі: якщо збірка впала, одразу ясно, який коміт її зламав. Великий коміт за тиждень роботи робить пошук причини довгим.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Звикнути до червоної збірки',
+        body: 'Якщо збірка падає, а команда продовжує пушити зверху, нові помилки ховаються за старими. Червона збірка має бути пріоритетом номер один, доки її не полагоджено.'
+      },
+      links: [
+        {
+          text: 'GitHub Actions Documentation',
+          url: 'https://docs.github.com/en/actions'
+        }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../_shared/recs.js"></script>
+</body>
+</html>

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Java Core · Технічні рекомендації ментора</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../_shared/recs.css" />
+</head>
+<body>
+<script>
+const RECS = {
+  course: 'Java Core',
+  subtitle: 'Практичні поради ментора до кожного модуля: корисні прийоми IntelliJ IDEA, пастки мови Java і типові помилки, яких варто уникати.',
+  modules: [
+    {
+      title: 'Огляд мови Java, знайомство з Git',
+      icon: 'terminal',
+      intro: 'Перший модуль про те, як влаштований робочий процес: де пишемо код, як його запускаємо і як зберігаємо в Git. Нижче кілька звичок, які я раджу закласти з першого дня.',
+      tips: [
+        {
+          title: 'Користуйтеся шаблонами IntelliJ IDEA',
+          body: [
+            'Щоб не набирати рутинні конструкції вручну, в IDEA є live templates. Наберіть <code>psvm</code> і натисніть Tab, і IDE згенерує метод <code>main</code>. <code>sout</code> + Tab дає <code>System.out.println()</code>. Так менше друкарських помилок і швидше видно результат.',
+            {
+              code: `psvm  →  public static void main(String[] args) { }
+sout  →  System.out.println();`
+            }
+          ]
+        },
+        {
+          title: 'Перед кожним комітом дивіться git status',
+          body: [
+            'Команда <code>git status</code> показує, які файли змінено, які вже в індексі, а які Git узагалі не відстежує. Перевірка займає секунду, а рятує від комітів із зайвими файлами. Для огляду конкретних змін є <code>git diff</code>.',
+            {
+              code: `git status
+git add src/Main.java
+git commit -m "Add greeting output"`
+            }
+          ]
+        },
+        {
+          title: 'Додайте .gitignore одразу',
+          body: [
+            'Скомпільовані класи й службові файли IDE не повинні потрапляти в репозиторій. Створіть у корені проєкту файл <code>.gitignore</code> і додайте туди теки збірки та налаштувань IDEA. GitHub пропонує готовий шаблон Java під час створення репозиторію.',
+            {
+              code: `out/
+target/
+.idea/
+*.class`
+            }
+          ]
+        },
+        {
+          title: 'Пишіть зрозумілі повідомлення комітів',
+          body: [
+            'Повідомлення на кшталт «fix» чи «update» через тиждень нічого не скаже ні вам, ні тому, хто перевірятиме ДЗ. Описуйте, що змінилося: «Add input validation for age». Невеликі коміти з одним змістом легше переглядати й відкочувати.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Робота без комітів до самого кінця',
+        body: 'Часто весь код ДЗ з\'являється в репозиторії одним комітом в останній день. Якщо щось зламається посеред роботи, повернутися нікуди. Комітьте кожен завершений крок, навіть маленький.'
+      },
+      links: [
+        {
+          text: 'Pro Git українською',
+          url: 'https://git-scm.com/book/uk/v2'
+        },
+        {
+          text: 'Java Code Conventions (Oracle)',
+          url: 'https://www.oracle.com/java/technologies/javase/codeconventions-contents.html'
+        }
+      ]
+    },
+    {
+      title: 'Змінні Java, типи даних, оператори',
+      icon: 'var',
+      intro: 'Змінні й примітивні типи здаються простими, але саме тут ховаються помилки, які потім довго шукають. Ось на що я раджу звернути увагу.',
+      tips: [
+        {
+          title: 'Пам\'ятайте про переповнення int',
+          body: [
+            'Тип <code>int</code> зберігає значення до 2 147 483 647. Якщо додати до максимуму одиницю, Java не видасть помилку, а значення «перескочить» у від\'ємне. Для великих чисел беріть <code>long</code>.',
+            {
+              code: `<span class="kw">int</span> max = Integer.MAX_VALUE;
+System.out.println(max + <span class="nm">1</span>); <span class="cm">// -2147483648</span>`
+            }
+          ]
+        },
+        {
+          title: 'Підкреслення в числових літералах',
+          body: [
+            'Довгі числа легко прочитати неправильно. З Java 7 у числових літералах можна ставити підкреслення, компілятор їх ігнорує, а читати стає простіше.',
+            {
+              code: `<span class="kw">long</span> population = <span class="nm">41_000_000L</span>;
+<span class="kw">int</span> mask = <span class="nm">0b1010_1010</span>;`
+            }
+          ]
+        },
+        {
+          title: 'double не підходить для грошей',
+          body: [
+            'Дробові типи зберігають числа у двійковому вигляді, тому <code>0.1 + 0.2</code> дає <code>0.30000000000000004</code>. Для порівнянь з <code>double</code> користуйтеся допуском, а для грошових розрахунків класом <code>BigDecimal</code>.',
+            {
+              code: 'System.out.println(<span class="nm">0.1</span> + <span class="nm">0.2</span>); <span class="cm">// 0.30000000000000004</span>'
+            }
+          ]
+        },
+        {
+          title: 'Називайте змінні за змістом',
+          body: [
+            'За Java Code Convention змінні пишуть у camelCase: <code>totalPrice</code>, <code>userAge</code>. Назва має пояснювати, що всередині, тоді коментар часто стає зайвим. Однолітерні імена доречні хіба що для лічильника циклу.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Цілочисельне ділення',
+        body: 'Вираз <code>5 / 2</code> дає <code>2</code>, бо обидва операнди цілі. Якщо потрібен дробовий результат, зробіть дробовим хоча б один операнд: <code>5 / 2.0</code> або <code>(double) a / b</code>. Приведення після ділення, <code>(double) (a / b)</code>, вже не допоможе.'
+      },
+      links: [
+        {
+          text: 'Primitive Data Types (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html'
+        }
+      ]
+    },
+    {
+      title: 'Масиви, умови, робота з консоллю',
+      icon: 'grid',
+      intro: 'Масиви, умови й робота з консоллю дають перші справді інтерактивні програми. Кілька порад, які збережуть вам час на налагодженні.',
+      tips: [
+        {
+          title: 'Друкуйте масив через Arrays.toString',
+          body: [
+            'Якщо передати масив прямо в <code>println</code>, ви побачите щось на кшталт <code>[I@1b6d3586</code>: це тип і хеш об\'єкта, а не вміст. Для виведення елементів є <code>Arrays.toString</code>, а для двовимірних масивів <code>Arrays.deepToString</code>.',
+            {
+              code: `<span class="kw">int</span>[] nums = {<span class="nm">3</span>, <span class="nm">1</span>, <span class="nm">2</span>};
+System.out.println(Arrays.toString(nums)); <span class="cm">// [3, 1, 2]</span>`
+            }
+          ]
+        },
+        {
+          title: 'Пастка Scanner: nextInt і nextLine',
+          body: [
+            'Після <code>nextInt()</code> у буфері лишається символ нового рядка. Тому наступний <code>nextLine()</code> одразу повертає порожній рядок і «пропускає» введення. Додайте зайвий <code>nextLine()</code> після числа або читайте все через <code>nextLine()</code> і перетворюйте через <code>Integer.parseInt</code>.',
+            {
+              code: `<span class="kw">int</span> age = scanner.nextInt();
+scanner.nextLine(); <span class="cm">// забираємо залишок рядка</span>
+String name = scanner.nextLine();`
+            }
+          ]
+        },
+        {
+          title: 'Рядки в умовах порівнюйте через equals',
+          body: [
+            'Оператор <code>==</code> для рядків перевіряє, чи це той самий об\'єкт у пам\'яті, а не чи однаковий у них текст. Рядок, прочитаний з консолі, майже завжди буде іншим об\'єктом. В умовах використовуйте <code>equals</code> або <code>equalsIgnoreCase</code>.',
+            {
+              code: '<span class="kw">if</span> (answer.equalsIgnoreCase(<span class="st">"yes"</span>)) { ... }'
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Вихід за межі масиву в циклі',
+        body: 'Умова <code>i &lt;= arr.length</code> замість <code>i &lt; arr.length</code> дає <code>ArrayIndexOutOfBoundsException</code> на останній ітерації, бо останній індекс дорівнює <code>length - 1</code>. Якщо індекс не потрібен, цикл for-each знімає цю проблему повністю.'
+      },
+      links: [
+        {
+          text: 'Arrays (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/java/nutsandbolts/arrays.html'
+        },
+        {
+          text: 'Клас Scanner (Java API)',
+          url: 'https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Scanner.html'
+        }
+      ]
+    },
+    {
+      title: 'Цикли',
+      icon: 'loop',
+      intro: 'Цикли й сортування бульбашкою тренують алгоритмічне мислення. Тут найкорисніше навчитися бачити, що відбувається на кожній ітерації.',
+      tips: [
+        {
+          title: 'Покрокове налагодження в IntelliJ IDEA',
+          body: [
+            'Поставте breakpoint кліком біля номера рядка й запустіть програму в режимі Debug. Далі кнопка Step Over виконує по одному рядку, а у вікні Variables видно значення лічильника й елементів масиву. Так помилку в умові циклу знаходити набагато простіше, ніж через <code>println</code>.'
+          ]
+        },
+        {
+          title: 'Обирайте цикл під задачу',
+          body: [
+            '<code>for</code> зручний, коли кількість повторів відома заздалегідь або потрібен індекс. <code>while</code> підходить, коли зупиняємося за умовою, наприклад поки користувач не введе «exit». for-each найпростіший для перебору всіх елементів без індексу.',
+            {
+              code: `<span class="kw">for</span> (<span class="kw">int</span> n : numbers) {
+    sum += n;
+}`
+            }
+          ]
+        },
+        {
+          title: 'Оптимізуйте бульбашку прапорцем',
+          body: [
+            'Якщо за повний прохід не відбулося жодної заміни, масив уже відсортований і далі можна не йти. Прапорець <code>swapped</code> скорочує роботу на майже відсортованих даних.',
+            {
+              code: `<span class="kw">boolean</span> swapped;
+<span class="kw">do</span> {
+    swapped = <span class="kw">false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; arr.length - <span class="nm">1</span>; i++) {
+        <span class="kw">if</span> (arr[i] &gt; arr[i + <span class="nm">1</span>]) {
+            <span class="kw">int</span> t = arr[i]; arr[i] = arr[i + <span class="nm">1</span>]; arr[i + <span class="nm">1</span>] = t;
+            swapped = <span class="kw">true</span>;
+        }
+    }
+} <span class="kw">while</span> (swapped);`
+            }
+          ]
+        },
+        {
+          title: 'У реальному коді є Arrays.sort',
+          body: [
+            'Бульбашку вчимо, щоб зрозуміти, як працює сортування. У робочих задачах беруть <code>Arrays.sort</code> або <code>Collections.sort</code>: вони значно швидші на великих масивах.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Нескінченний цикл',
+        body: 'Найчастіше причина в тому, що лічильник змінюється не в той бік або не змінюється взагалі, наприклад, <code>i++</code> забули чи написали всередині <code>if</code>. Якщо програма «зависла», зупиніть її кнопкою Stop і пройдіть цикл у дебагері.'
+      },
+      links: [
+        {
+          text: 'The for Statement (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/java/nutsandbolts/for.html'
+        }
+      ]
+    },
+    {
+      title: 'ООП, класи, методи',
+      icon: 'layers',
+      intro: 'ООП є основою всього подальшого курсу. Кілька практичних звичок, які допоможуть писати класи так, як це роблять у командах.',
+      tips: [
+        {
+          title: 'Завжди ставте @Override',
+          body: [
+            'Анотація <code>@Override</code> просить компілятор перевірити, що метод справді перевизначає батьківський. Якщо ви помилилися в назві чи параметрах, наприклад написали <code>tostring()</code> замість <code>toString()</code>, компілятор одразу про це скаже. Без анотації вийде новий метод, і помилку буде важко помітити.',
+            {
+              code: `<span class="kw">@Override</span>
+<span class="kw">public</span> String toString() {
+    <span class="kw">return</span> <span class="st">"User{name='"</span> + name + <span class="st">"'}"</span>;
+}`
+            }
+          ]
+        },
+        {
+          title: 'Робіть поля private, а доступ давайте через методи',
+          body: [
+            'Інкапсуляція захищає об\'єкт від некоректного стану. Якщо поле <code>age</code> публічне, хтось може записати туди -5. Через сеттер можна перевірити значення. IDEA згенерує гетери й сетери через Alt+Insert на Windows/Linux або Cmd+N на macOS.',
+            {
+              code: `<span class="kw">public</span> <span class="kw">void</span> setAge(<span class="kw">int</span> age) {
+    <span class="kw">if</span> (age &lt; <span class="nm">0</span>) <span class="kw">throw</span> <span class="kw">new</span> IllegalArgumentException(<span class="st">"age &lt; 0"</span>);
+    <span class="kw">this</span>.age = age;
+}`
+            }
+          ]
+        },
+        {
+          title: 'Агрегація часто краща за наслідування',
+          body: [
+            'Наслідування жорстко зв\'язує класи: зміни в батьківському класі можуть зламати нащадків. Якщо зв\'язок звучить як «має» (Car має Engine), а не «є» (Car є Vehicle), робіть поле іншого класу замість <code>extends</code>.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Звернення до нестатичного поля з main',
+        body: '<code>main</code> статичний, тож напряму звертатися до звичайних полів і методів класу з нього не можна: компілятор скаже <code>non-static ... cannot be referenced from a static context</code>. Створіть об\'єкт і викликайте методи через нього, а не робіть усе <code>static</code>.'
+      },
+      links: [
+        {
+          text: 'Overriding and Hiding Methods (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/java/IandI/override.html'
+        }
+      ]
+    },
+    {
+      title: 'Конструктор, блоки ініціалізації, внутрішні класи',
+      icon: 'plus',
+      intro: 'Конструктори, внутрішні класи, Singleton і винятки. Ось кілька прийомів, які роблять такий код чистішим і надійнішим.',
+      tips: [
+        {
+          title: 'Ланцюжок конструкторів через this(...)',
+          body: [
+            'Якщо в класі кілька конструкторів, не дублюйте в кожному ту саму логіку. Простіший конструктор може викликати повніший через <code>this(...)</code> з типовими значеннями. Виклик <code>this(...)</code> має бути першим рядком конструктора.',
+            {
+              code: `<span class="kw">public</span> User(String name) {
+    <span class="kw">this</span>(name, <span class="nm">18</span>);
+}
+
+<span class="kw">public</span> User(String name, <span class="kw">int</span> age) {
+    <span class="kw">this</span>.name = name;
+    <span class="kw">this</span>.age = age;
+}`
+            }
+          ]
+        },
+        {
+          title: 'Генеруйте конструктори в IDE',
+          body: [
+            'Alt+Insert (Windows/Linux) або Cmd+N (macOS) у IntelliJ IDEA відкриває меню Generate, де можна обрати Constructor і потрібні поля. Це швидше й без друкарських помилок у присвоєннях.'
+          ]
+        },
+        {
+          title: 'Не залишайте catch порожнім',
+          body: [
+            'Порожній <code>catch</code> «ковтає» виняток, і програма продовжує роботу так, ніби нічого не сталося. Потім помилка проявляється в зовсім іншому місці. Мінімум виведіть повідомлення або <code>e.printStackTrace()</code>, а краще обробіть ситуацію чи прокиньте виняток далі.',
+            {
+              code: `<span class="kw">try</span> {
+    parseInput(line);
+} <span class="kw">catch</span> (NumberFormatException e) {
+    System.out.println(<span class="st">"Введіть число: "</span> + e.getMessage());
+}`
+            }
+          ]
+        },
+        {
+          title: 'Singleton без зайвої складності',
+          body: [
+            'Найпростіший надійний варіант Singleton у Java є <code>enum</code> з одним елементом: JVM сама гарантує один екземпляр навіть у багатопоточному коді. Класичний варіант з приватним конструктором і статичним полем теж робочий, але лінива ініціалізація без синхронізації може створити два об\'єкти.',
+            {
+              code: `<span class="kw">public</span> <span class="kw">enum</span> AppConfig {
+    INSTANCE;
+    <span class="cm">// поля й методи</span>
+}`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Зникнення конструктора за замовчуванням',
+        body: 'Щойно в класі з\'являється конструктор з параметрами, компілятор більше не додає порожній. Код <code>new User()</code> перестає компілюватися. Якщо він потрібен, оголосіть його явно.'
+      },
+      links: [
+        {
+          text: 'Nested Classes (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html'
+        },
+        {
+          text: 'Exceptions (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/essential/exceptions/'
+        }
+      ]
+    },
+    {
+      title: 'Робота з рядками. Immutable objects',
+      icon: 'text',
+      intro: 'Рядки трапляються в кожній програмі, тому знання про їхню незмінність заощаджує багато часу на пошук дивних багів.',
+      tips: [
+        {
+          title: 'Методи String повертають новий рядок',
+          body: [
+            'Оскільки <code>String</code> незмінний, виклик <code>s.toUpperCase()</code> чи <code>s.trim()</code> не змінює <code>s</code>, а повертає новий рядок. Якщо результат нікуди не присвоїти, він просто загубиться.',
+            {
+              code: `String s = <span class="st">"  hello "</span>;
+s.trim();          <span class="cm">// s не змінився</span>
+s = s.trim();      <span class="cm">// тепер "hello"</span>`
+            }
+          ]
+        },
+        {
+          title: 'StringBuilder для збирання рядка в циклі',
+          body: [
+            'У циклі склеювання через <code>+</code> щоразу створює новий рядок і копіює весь попередній текст. <code>StringBuilder</code> дописує в один буфер, а готовий результат дає <code>toString()</code>.',
+            {
+              code: `StringBuilder sb = <span class="kw">new</span> StringBuilder();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">1000</span>; i++) {
+    sb.append(i).append(<span class="st">','</span>);
+}
+String result = sb.toString();`
+            }
+          ]
+        },
+        {
+          title: 'Корисні методи, про які часто забувають',
+          body: [
+            '<code>String.join</code> склеює елементи через розділювач, <code>String.format</code> і <code>formatted()</code> допомагають з шаблонами, <code>isBlank()</code> (з Java 11) перевіряє, що рядок порожній або складається з пробілів, <code>repeat()</code> повторює рядок.',
+            {
+              code: `String.join(<span class="st">", "</span>, List.of(<span class="st">"a"</span>, <span class="st">"b"</span>)); <span class="cm">// "a, b"</span>
+<span class="st">"%s: %d"</span>.formatted(<span class="st">"Age"</span>, <span class="nm">30</span>);        <span class="cm">// "Age: 30"</span>`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Порівняння рядків через ==',
+        body: 'Іноді <code>==</code> для рядків «працює» через пул рядкових літералів, і це створює хибне відчуття правильності. Для рядків, отриманих з консолі, файлу чи склеювання, <code>==</code> поверне <code>false</code> навіть за однакового тексту. Завжди використовуйте <code>equals</code>.'
+      },
+      links: [
+        {
+          text: 'Клас String (Java API)',
+          url: 'https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html'
+        }
+      ]
+    },
+    {
+      title: 'Інтерфейси та перечислення',
+      icon: 'plug',
+      intro: 'Інтерфейси й enum допомагають описувати поведінку й набори фіксованих значень. Кілька порад, як використовувати їх доречно.',
+      tips: [
+        {
+          title: 'Інтерфейс чи абстрактний клас',
+          body: [
+            'Інтерфейс описує, що вміє об\'єкт, і клас може реалізувати кілька інтерфейсів. Абстрактний клас доречний, коли нащадкам потрібні спільні поля стану й частина реалізації. Якщо сумніваєтеся, починайте з інтерфейсу.'
+          ]
+        },
+        {
+          title: 'Enum замість рядків і чисел-констант',
+          body: [
+            'Статуси замовлення у вигляді <code>"NEW"</code>, <code>"PAID"</code> чи <code>1, 2, 3</code> легко переплутати або написати з помилкою, і компілятор цього не помітить. Enum обмежує набір значень, а в <code>switch</code> IDE підкаже, якщо якийсь варіант не оброблено.',
+            {
+              code: `<span class="kw">enum</span> OrderStatus { NEW, PAID, SHIPPED }
+
+<span class="kw">switch</span> (status) {
+    <span class="kw">case</span> NEW -&gt; System.out.println(<span class="st">"Новий"</span>);
+    <span class="kw">case</span> PAID -&gt; System.out.println(<span class="st">"Оплачено"</span>);
+    <span class="kw">case</span> SHIPPED -&gt; System.out.println(<span class="st">"Відправлено"</span>);
+}`
+            }
+          ]
+        },
+        {
+          title: 'Enum може мати поля й методи',
+          body: [
+            'У кожного елемента enum можуть бути власні дані, наприклад людська назва статусу. Конструктор enum завжди приватний, а всі значення можна отримати через <code>values()</code>.',
+            {
+              code: `<span class="kw">enum</span> Planet {
+    EARTH(<span class="nm">5.97e24</span>), MARS(<span class="nm">6.42e23</span>);
+
+    <span class="kw">private</span> <span class="kw">final</span> <span class="kw">double</span> mass;
+
+    Planet(<span class="kw">double</span> mass) { <span class="kw">this</span>.mass = mass; }
+
+    <span class="kw">double</span> mass() { <span class="kw">return</span> mass; }
+}`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'valueOf з неперевіреним рядком',
+        body: '<code>OrderStatus.valueOf("paid")</code> кине <code>IllegalArgumentException</code>, бо імена чутливі до регістру й мають точно збігатися. Якщо рядок приходить від користувача, приведіть його до верхнього регістру й обробіть можливий виняток.'
+      },
+      links: [
+        {
+          text: 'Default Methods (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html'
+        },
+        {
+          text: 'Enum Types (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html'
+        }
+      ]
+    },
+    {
+      title: 'Дженерики та колекції',
+      icon: 'list',
+      intro: 'Колекції будуть у кожному наступному модулі, тож варто одразу засвоїти кілька правил, без яких код поводиться дивно.',
+      tips: [
+        {
+          title: 'Оголошуйте змінну типом інтерфейсу',
+          body: [
+            'Пишіть <code>List&lt;String&gt; names = new ArrayList&lt;&gt;();</code> замість <code>ArrayList&lt;String&gt; names</code>. Так реалізацію можна замінити, не переписуючи решту коду. Порожні кутові дужки <code>&lt;&gt;</code> (diamond) дозволяють не повторювати тип праворуч.',
+            {
+              code: `List&lt;String&gt; names = <span class="kw">new</span> ArrayList&lt;&gt;();
+Map&lt;String, Integer&gt; ages = <span class="kw">new</span> HashMap&lt;&gt;();`
+            }
+          ]
+        },
+        {
+          title: 'equals і hashCode для власних класів',
+          body: [
+            '<code>HashSet</code> і ключі <code>HashMap</code> спираються на <code>hashCode()</code> та <code>equals()</code>. Якщо ви кладете туди власні об\'єкти без перевизначення цих методів, два однакові за змістом об\'єкти вважатимуться різними. IDEA генерує обидва методи через Alt+Insert (Cmd+N на macOS).'
+          ]
+        },
+        {
+          title: 'List.of створює незмінний список',
+          body: [
+            'Колекції з <code>List.of</code>, <code>Set.of</code> і <code>Map.of</code> не можна змінювати: <code>add</code> чи <code>remove</code> кинуть <code>UnsupportedOperationException</code>. Якщо потрібен змінний список, обгорніть: <code>new ArrayList&lt;&gt;(List.of(...))</code>.',
+            {
+              code: `List&lt;Integer&gt; fixed = List.of(<span class="nm">1</span>, <span class="nm">2</span>, <span class="nm">3</span>);
+List&lt;Integer&gt; editable = <span class="kw">new</span> ArrayList&lt;&gt;(fixed);
+editable.add(<span class="nm">4</span>);`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Видалення елементів у for-each',
+        body: 'Видалення з колекції прямо всередині for-each дає <code>ConcurrentModificationException</code>. Для видалення за умовою є <code>removeIf</code>, або явний <code>Iterator</code> з методом <code>remove()</code>.'
+      },
+      links: [
+        {
+          text: 'Collections (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/collections/'
+        }
+      ]
+    },
+    {
+      title: 'Потоки введення-виводу. Робота із файлами',
+      icon: 'file',
+      intro: 'Робота з файлами й потоками введення-виведення переводить програми з консолі в реальний світ. Ось що варто знати, щоб файли не губилися й не псувалися.',
+      tips: [
+        {
+          title: 'Файли відкривайте через try-with-resources',
+          body: [
+            'Ресурси в дужках <code>try</code> закриваються автоматично, навіть якщо виникне виняток. Так файл не лишається заблокованим, а дані не губляться в незаписаному буфері.',
+            {
+              code: `<span class="kw">try</span> (BufferedReader reader = Files.newBufferedReader(Path.of(<span class="st">"data.txt"</span>))) {
+    String line;
+    <span class="kw">while</span> ((line = reader.readLine()) != <span class="kw">null</span>) {
+        System.out.println(line);
+    }
+}`
+            }
+          ]
+        },
+        {
+          title: 'Короткі методи класу Files',
+          body: [
+            'Для невеликих файлів зручно використовувати <code>Files.readAllLines</code>, <code>Files.readString</code> і <code>Files.writeString</code> (останні два з Java 11). Вони самі відкривають і закривають файл, а за замовчуванням працюють з UTF-8.',
+            {
+              code: `List&lt;String&gt; lines = Files.readAllLines(Path.of(<span class="st">"data.txt"</span>));
+Files.writeString(Path.of(<span class="st">"out.txt"</span>), <span class="st">"Привіт"</span>);`
+            }
+          ]
+        },
+        {
+          title: 'JSON через бібліотеку',
+          body: [
+            'Розбирати JSON вручну через <code>split</code> і <code>substring</code> ненадійно. Бібліотеки на кшталт Gson чи Jackson перетворюють JSON на об\'єкти й назад одним викликом. Підключіть ту, що використовується в модулі, і подивіться її приклади.'
+          ]
+        },
+        {
+          title: 'serialVersionUID для серіалізації',
+          body: [
+            'Якщо клас реалізує <code>Serializable</code>, оголосіть у ньому <code>private static final long serialVersionUID</code>. Без нього навіть незначна зміна класу може зробити раніше збережені файли непридатними для читання.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Відносний шлях «не знаходить» файл',
+        body: 'Шлях <code>data.txt</code> рахується від робочої теки процесу. У IntelliJ IDEA за замовчуванням це корінь проєкту, а не тека з класом. Якщо отримуєте <code>NoSuchFileException</code>, виведіть <code>Path.of("data.txt").toAbsolutePath()</code> і подивіться, де програма насправді шукає файл.'
+      },
+      links: [
+        {
+          text: 'The try-with-resources Statement (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html'
+        },
+        {
+          text: 'Клас Files (Java API)',
+          url: 'https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Files.html'
+        }
+      ]
+    },
+    {
+      title: 'Функціональне програмування, Stream API',
+      icon: 'lambda',
+      intro: 'Лямбди, Optional і Stream API роблять код коротшим і виразнішим, якщо знати їхні правила.',
+      tips: [
+        {
+          title: 'Посилання на методи замість лямбд',
+          body: [
+            'Коли лямбда лише викликає готовий метод, її можна замінити посиланням на метод. IDEA сама підсвічує такі місця й пропонує заміну через Alt+Enter.',
+            {
+              code: `names.stream().map(s -&gt; s.toUpperCase());
+names.stream().map(String::toUpperCase); <span class="cm">// те саме</span>`
+            }
+          ]
+        },
+        {
+          title: 'Стрім можна використати лише один раз',
+          body: [
+            'Після термінальної операції стрім закривається. Повторний виклик кине <code>IllegalStateException</code>. Якщо дані потрібні двічі, створіть новий стрім із колекції.'
+          ]
+        },
+        {
+          title: 'Optional без get()',
+          body: [
+            'Виклик <code>get()</code> на порожньому <code>Optional</code> кидає <code>NoSuchElementException</code>, тобто повертає ту саму проблему, що й <code>null</code>. Використовуйте <code>orElse</code>, <code>orElseGet</code>, <code>ifPresent</code> чи <code>map</code>.',
+            {
+              code: `String name = findUser(id)
+        .map(User::getName)
+        .orElse(<span class="st">"Гість"</span>);`
+            }
+          ]
+        },
+        {
+          title: 'Групування через Collectors',
+          body: [
+            '<code>Collectors.groupingBy</code> одним рядком робить те, на що з циклами пішло б кілька, наприклад згрупувати користувачів за містом. Також корисні <code>Collectors.counting()</code> і <code>Collectors.joining()</code>.',
+            {
+              code: `Map&lt;String, List&lt;User&gt;&gt; byCity = users.stream()
+        .collect(Collectors.groupingBy(User::getCity));`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Побічні ефекти всередині map',
+        body: 'Якщо в <code>map</code> чи <code>filter</code> змінювати зовнішні змінні чи колекції, результат стає непередбачуваним, особливо в паралельних стрімах. Операції стріму мають лише перетворювати дані. Для налагодження проміжних значень є <code>peek</code>.'
+      },
+      links: [
+        {
+          text: 'Пакет java.util.stream (Java API)',
+          url: 'https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/package-summary.html'
+        }
+      ]
+    },
+    {
+      title: 'Багатопоточність',
+      icon: 'threads',
+      intro: 'Багатопоточність складна навіть для досвідчених розробників, тож тут особливо корисно знати кілька базових запобіжників.',
+      tips: [
+        {
+          title: 'start(), а не run()',
+          body: [
+            'Метод <code>run()</code> викликає код у поточному потоці, як звичайний метод, і жодної паралельності не буде. Новий потік запускає саме <code>start()</code>.',
+            {
+              code: `Thread t = <span class="kw">new</span> Thread(() -&gt; System.out.println(Thread.currentThread().getName()));
+t.start(); <span class="cm">// новий потік</span>
+<span class="cm">// t.run(); — виконається в main</span>`
+            }
+          ]
+        },
+        {
+          title: 'Для лічильників є атомарні класи',
+          body: [
+            'Замість <code>synchronized</code> навколо <code>count++</code> можна взяти <code>AtomicInteger</code>: <code>incrementAndGet()</code> виконується атомарно й не губить оновлень.',
+            {
+              code: `AtomicInteger count = <span class="kw">new</span> AtomicInteger();
+count.incrementAndGet();`
+            }
+          ]
+        },
+        {
+          title: 'Завжди закривайте ExecutorService',
+          body: [
+            'Пул потоків тримає програму живою, доки його не зупинити. Після передачі задач викличте <code>shutdown()</code>, а за потреби <code>awaitTermination()</code>. З Java 19 <code>ExecutorService</code> можна відкривати в try-with-resources, і він закриється сам.',
+            {
+              code: `ExecutorService pool = Executors.newFixedThreadPool(<span class="nm">4</span>);
+pool.submit(() -&gt; doWork());
+pool.shutdown();`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Програма не завершується',
+        body: 'Якщо <code>main</code> уже дійшов до кінця, а процес досі працює, найчастіше причина в незакритому <code>ExecutorService</code> або потоці з нескінченним циклом. Перевірте, що для кожного пулу викликано <code>shutdown()</code>.'
+      },
+      links: [
+        {
+          text: 'Concurrency (Oracle Tutorial)',
+          url: 'https://docs.oracle.com/javase/tutorial/essential/concurrency/'
+        }
+      ]
+    },
+    {
+      title: 'Адаптивний дизайн',
+      icon: 'globe',
+      intro: 'У програмі: Web, протоколи, JSoup. У програмі модуль називається «Адаптивний дизайн», але його теми стосуються вебу: протоколи HTTP/HTTPS, робота з HTTP у Java і бібліотека JSoup. Рекомендації нижче саме про це.',
+      tips: [
+        {
+          title: 'Вбудований HttpClient',
+          body: [
+            'З Java 11 для HTTP-запитів є стандартний <code>java.net.http.HttpClient</code>. Сторонні бібліотеки для простих GET-запитів не потрібні.',
+            {
+              code: `HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder(URI.create(<span class="st">"https://example.com"</span>)).build();
+HttpResponse&lt;String&gt; response = client.send(request, HttpResponse.BodyHandlers.ofString());
+System.out.println(response.statusCode());`
+            }
+          ]
+        },
+        {
+          title: 'Спершу статус, потім тіло',
+          body: [
+            'Перевіряйте <code>statusCode()</code> перед розбором відповіді. 2xx означає успіх, 4xx вказує на помилку в запиті (404, ресурс не знайдено), 5xx на проблему сервера. Так ви не намагатиметеся парсити сторінку помилки як звичайні дані.'
+          ]
+        },
+        {
+          title: 'CSS-селектори в JSoup',
+          body: [
+            'JSoup шукає елементи тими самими селекторами, що й CSS. Атрибут <code>abs:href</code> повертає повну адресу посилання навіть тоді, коли на сторінці вона відносна.',
+            {
+              code: `Document doc = Jsoup.connect(<span class="st">"https://example.com"</span>).get();
+<span class="kw">for</span> (Element link : doc.select(<span class="st">"a[href]"</span>)) {
+    System.out.println(link.attr(<span class="st">"abs:href"</span>));
+}`
+            }
+          ]
+        },
+        {
+          title: 'Ставте тайм-аути й поважайте сайти',
+          body: [
+            'Для <code>Jsoup.connect</code> задавайте <code>timeout()</code>, щоб програма не чекала нескінченно. Не надсилайте запити один за одним без пауз і перевіряйте файл <code>robots.txt</code> сайту, з яким працюєте.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Порожній результат на сучасному сайті',
+        body: 'JSoup отримує HTML, який віддав сервер, і не виконує JavaScript. Якщо вміст сторінки підвантажується скриптом, у документі його просто немає. Відкрийте «Переглянути код сторінки» в браузері: що бачите там, те й побачить JSoup.'
+      },
+      links: [
+        {
+          text: 'HTTP response status codes (MDN)',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Status'
+        },
+        {
+          text: 'JSoup Cookbook',
+          url: 'https://jsoup.org/cookbook/'
+        }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../_shared/recs.js"></script>
+</body>
+</html>

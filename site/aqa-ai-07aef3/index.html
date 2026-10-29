@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>AQA+AI · Технічні рекомендації ментора</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../_shared/recs.css" />
+</head>
+<body>
+<script>
+const RECS = {
+  course: 'AQA+AI',
+  subtitle: 'Практичні поради ментора до кожного модуля: що налаштувати з першого разу, як писати стабільні тести і яких помилок уникати.',
+  modules: [
+    {
+      title: 'Вступ та інструменти',
+      icon: 'terminal',
+      intro: 'Перший модуль про те, на чому триматиметься вся подальша робота: інструменти, репозиторій і перший Playwright-проєкт. Нижче мої поради, які заощадять вам години на наступних модулях.',
+      tips: [
+        {
+          title: 'Ставте інструменти лише з офіційних сайтів, а Node.js — саме LTS',
+          body: [
+            'VS Code, Node.js, Git і Docker завантажуйте з сайтів виробників. Збірки зі сторонніх ресурсів бувають застарілими або зміненими.',
+            'Для Node.js обирайте версію LTS (Long Term Support), а не Current. LTS довго отримує виправлення, і з нею стабільно працюють пакети, зокрема Playwright. У Current з\'являються найновіші функції, але поведінка залежностей на ній менш передбачувана.',
+            'Після встановлення перевірте кожен інструмент у терміналі. Якщо команда показала номер версії, інструмент на місці:',
+            {
+              code: `node -v
+npm -v
+git --version
+docker --version`
+            }
+          ]
+        },
+        {
+          title: 'Спершу форк, потім клонування',
+          body: [
+            'Порядок важливий. Спочатку робите форк репозиторію Tasteorama у свій GitHub, і вже потім клонуєте на комп\'ютер саме свою копію.',
+            'Якщо клонувати оригінальний репозиторій, ви не зможете запушити туди зміни, а Pull Request доведеться налаштовувати заново. Усю подальшу роботу ведіть лише у своєму форку.'
+          ]
+        },
+        {
+          title: 'Створіть .gitignore до першого коміту',
+          body: [
+            'Мінімальний набір для нашого проєкту:',
+            {
+              code: `node_modules/
+test-results/
+playwright-report/
+blob-report/
+playwright/.local-browsers/
+.env`
+            },
+            'Якщо <code>node_modules</code> уже потрапила в коміт, сам <code>.gitignore</code> її не прибере: Git продовжить відстежувати файли, які вже знає. Тоді папку треба явно зняти з відстеження командою <code>git rm -r --cached node_modules</code> і закомітити зміну.'
+          ]
+        },
+        {
+          title: 'Тримайте Playwright у тому самому репозиторії, що й застосунок',
+          body: [
+            'Усередині клонованого Tasteorama створіть папку <code>qa-automation</code> і вже в ній запустіть ініціалізацію:',
+            {
+              code: `mkdir qa-automation
+cd qa-automation
+npm init playwright@latest
+npx playwright test`
+            },
+            'Останньою командою переконайтеся, що стандартний тест проходить. Застосунок і тести в одному репозиторії означають, що код і перевірки до нього змінюються разом і потрапляють в один Pull Request.'
+          ]
+        },
+        {
+          title: 'Автоматизуйте те, що повторюється',
+          body: [
+            'Перші кандидати на автотест: регрес і smoke-перевірки, тобто сценарії, які проганяють знову й знову. Exploratory-тестування, оцінку UX і одноразові перевірки лишайте людині.',
+            'Одна з причин, чому ми працюємо з Playwright, — auto-waiting: перед кожною дією фреймворк сам чекає, поки елемент стане готовим. Тому вставляти в тест паузи «про всяк випадок» не потрібно, вони лише сповільнюють прогін.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Коміт без .gitignore',
+        body: 'Найчастіше на старті в репозиторій потрапляють <code>node_modules</code> і звіти Playwright. Pull Request стає величезним, а рев\'ю перетворюється на гортання тисяч службових файлів. Перевірте <code>.gitignore</code> перед першим <code>git add</code>, і ця проблема вас омине.'
+      },
+      links: [
+        {
+          text: 'Node.js: релізи та статус LTS',
+          url: 'https://nodejs.org/en/about/previous-releases'
+        },
+        {
+          text: 'GitHub Docs: як зробити форк репозиторію',
+          url: 'https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo'
+        },
+        {
+          text: 'Git: документація .gitignore',
+          url: 'https://git-scm.com/docs/gitignore'
+        },
+        {
+          text: 'Playwright: встановлення і перший запуск',
+          url: 'https://playwright.dev/docs/intro'
+        },
+        {
+          text: 'Playwright: auto-waiting і перевірки готовності елемента',
+          url: 'https://playwright.dev/docs/actionability'
+        }
+      ]
+    },
+    {
+      title: 'JavaScript для автоматизатора',
+      icon: 'code',
+      intro: 'У другому модулі JavaScript працює без браузера: змінні, умови й цикли на тестових даних. Нижче поради про місця, де код виглядає правильним, а тест при цьому мовчки поводиться не так, як ви задумали.',
+      tips: [
+        {
+          title: 'const за замовчуванням, let лише там, де значення змінюється',
+          body: [
+            'Тестові дані, які не переприсвоюються, оголошуйте через <code>const</code>. <code>let</code> залиште для лічильників та інших змінних, значення яких свідомо оновлюється.',
+            'Зверніть увагу: масив, оголошений через <code>const</code>, можна змінювати методами на кшталт <code>push()</code>. Заборонено лише присвоїти змінній новий масив.',
+            {
+              code: `<span class="kw">const</span> emails = [<span class="st">'a@test.com'</span>, <span class="st">'b@test.com'</span>];
+emails.push(<span class="st">'c@test.com'</span>); <span class="cm">// працює</span>
+<span class="cm">// emails = []; // помилка: переприсвоєння const</span>
+
+<span class="kw">let</span> checked = <span class="nm">0</span>;
+checked++; <span class="cm">// лічильник оновлюється, тому let</span>`
+            }
+          ]
+        },
+        {
+          title: 'Значення з інтерфейсу завжди приходить рядком',
+          body: [
+            '<code>textContent()</code> повертає рядок, навіть якщо на екрані число. Перед порівнянням конвертуйте значення явно:',
+            {
+              code: `<span class="kw">const</span> recipesFoundText = <span class="kw">await</span> counter.textContent(); <span class="cm">// '12'</span>
+<span class="kw">const</span> recipesFound = Number(recipesFoundText); <span class="cm">// 12</span>`
+            },
+            'Друга пастка: <code>Number(\'Безкоштовно\')</code> поверне <code>NaN</code>, а <code>typeof NaN</code> — це <code>"number"</code>. Перевірка лише типу таку помилку не впіймає. Перевіряйте саме значення, яке очікуєте отримати.'
+          ]
+        },
+        {
+          title: 'Нуль — валідний результат, обробляйте його окремо',
+          body: [
+            'Умова <code>if (recipesFound)</code> вважає <code>0</code> «хибним» і мовчки зливає сценарій «нуль результатів» зі сценарієм «значення відсутнє». Якщо нуль для вас осмислений результат, перевіряйте його явно:',
+            {
+              code: `<span class="kw">if</span> (recipesFound === <span class="nm">0</span>) {
+  console.log(<span class="st">'Нічого не знайдено'</span>);
+} <span class="kw">else if</span> (recipesFound &gt; <span class="nm">0</span>) {
+  console.log(<span class="st">\`Знайдено: \${recipesFound}\`</span>);
+} <span class="kw">else</span> {
+  console.log(<span class="st">'Некоректне значення'</span>);
+}`
+            },
+            'Те саме стосується запасних значень. Оператор <code>||</code> підставить запасне значення і на <code>0</code>, і на порожній рядок. Якщо запасне значення потрібне лише тоді, коли значення взагалі не задане, використовуйте <code>??</code>, який реагує тільки на <code>null</code> і <code>undefined</code>.'
+          ]
+        },
+        {
+          title: 'Обирайте цикл під задачу',
+          body: [
+            '<code>for...of</code> зручний для перебору масиву тестових даних. <code>continue</code> пропускає поточний елемент і переходить до наступного, <code>break</code> повністю зупиняє цикл.',
+            '<code>while</code> перевіряє умову перед першою ітерацією, тож може не виконатися жодного разу. <code>do...while</code> спочатку виконує тіло, тому спрацює щонайменше один раз.',
+            {
+              code: `<span class="kw">for</span> (<span class="kw">const</span> email <span class="kw">of</span> emails) {
+  <span class="kw">if</span> (!email.includes(<span class="st">'@'</span>)) <span class="kw">continue</span>; <span class="cm">// пропускаємо некоректний</span>
+  <span class="kw">if</span> (email === <span class="st">'stop@test.com'</span>) <span class="kw">break</span>; <span class="cm">// зупиняємо перебір</span>
+  console.log(email);
+}`
+            }
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Порівняння рядка з числом',
+        body: '<code>\'12\' === 12</code> дає <code>false</code>, і тест іде в гілку <code>else</code> без жодного повідомлення про помилку. Якщо умова «чомусь» не спрацьовує, першим ділом виведіть у консоль <code>typeof</code> змінної. Це займає секунду і часто одразу показує причину.'
+      },
+      links: [
+        {
+          text: 'MDN: строга рівність (===)',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality'
+        },
+        {
+          text: 'MDN: оператор ?? (nullish coalescing)',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing'
+        },
+        {
+          text: 'MDN: Number.isNaN()',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN'
+        },
+        {
+          text: 'MDN: цикл for...of',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of'
+        }
+      ]
+    },
+    {
+      title: 'Основи Web для автоматизатора',
+      icon: 'globe',
+      intro: 'Третій модуль вчить читати реальну розмітку й обирати селектор свідомо, а не брати перший, що спрацював. Ці поради допоможуть зробити аудит локаторів так, щоб його результат витримав код-рев\'ю і ліг в основу першого тест-сьюту.',
+      tips: [
+        {
+          title: 'Проходьте шкалу пріоритету згори донизу',
+          body: [
+            'Обирайте атрибут для локатора в такому порядку:',
+            {
+              list: [
+                '<code>data-testid</code> — додається саме для тестів і переживає редизайн;',
+                'стабільний унікальний <code>id</code>;',
+                '<code>aria-label</code>;',
+                'тег і позиція у вкладеності — лише якщо вище нічого немає.'
+              ]
+            },
+            'Зупиняйтеся на першому пункті, який підходить. Саме ця дисципліна відрізняє тест, що переживає зміни дизайну, від тесту, що ламається щотижня.'
+          ]
+        },
+        {
+          title: 'Немає data-testid — сформулюйте точковий запит',
+          body: [
+            'Відсутність <code>data-testid</code> у розмітці трапляється часто, особливо на проєктах, де тестування підключилося не з першого дня. Спершу пошукайте стабільний <code>id</code> або <code>aria-label</code>. Якщо їх теж немає, просіть розробників додати атрибут конкретно там, де він критичний.',
+            'Запит виправданий, коли елемент бере участь у кількох тестах (кнопка входу, поле пошуку) або має клас, що змінюється з кожним редизайном. Якщо в елемента вже є надійний унікальний <code>id</code>, <code>data-testid</code> можна не просити.'
+          ]
+        },
+        {
+          title: 'Перевіряйте селектор у Console через $$()',
+          body: [
+            'Перш ніж записувати селектор у звіт, перевірте його в DevTools. На вкладці Console команда <code>$$()</code> повертає масив усіх елементів, що відповідають селектору:',
+            {
+              code: `$$(<span class="st">'[data-testid="login-email"]'</span>).length <span class="cm">// 1 — селектор унікальний</span>
+$$(<span class="st">'.recipe-card &gt; h3'</span>) <span class="cm">// масив заголовків карток</span>`
+            },
+            'Якщо <code>length</code> більше за 1, селектор знаходить кілька елементів, і тест може взаємодіяти не з тим, який ви мали на увазі.'
+          ]
+        },
+        {
+          title: 'Розрізняйте комбінатори &gt; і пробіл',
+          body: [
+            'Селектор <code>.card &gt; h3</code> знаходить лише прямих нащадків: <code>h3</code>, що лежить одразу всередині <code>.card</code>. Селектор <code>.card h3</code> знаходить <code>h3</code> на будь-якій глибині вкладеності.',
+            'Для стану елементів форми є псевдокласи: <code>:checked</code> знаходить вибраний чекбокс чи радіокнопку, <code>:disabled</code> — неактивне поле або кнопку. Це зручніше, ніж шукати стан через класи.'
+          ]
+        },
+        {
+          title: 'У сценарії з помилкою дивіться і Network',
+          body: [
+            'Відтворюючи «неправильний пароль», не обмежуйтеся вкладкою Elements. На Network видно сам запит входу і статус відповіді сервера, а Console покаже помилки JavaScript, якщо вони є. Так ви бачите повну картину: що сталося на сервері і що показав інтерфейс.'
+          ]
+        }
+      ],
+      mistake: {
+        title: '«Copy selector» з DevTools',
+        body: 'Пункт «Copy selector» у контекстному меню DevTools часто видає довгий ланцюжок на кшталт <code>div &gt; div &gt; form &gt; div:nth-child(2) &gt; input</code>. Він працює сьогодні, але ламається від будь-якої зміни в розмітці. Інша часта помилка — локатор за <code>class</code> там, де вже є стабільний <code>id</code>: це пряме порушення шкали пріоритету.'
+      },
+      links: [
+        {
+          text: 'Chrome DevTools: офіційна документація',
+          url: 'https://developer.chrome.com/docs/devtools'
+        },
+        {
+          text: 'Chrome DevTools: утиліти Console, зокрема $$()',
+          url: 'https://developer.chrome.com/docs/devtools/console/utilities'
+        },
+        {
+          text: 'MDN: CSS-селектори',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_selectors'
+        },
+        {
+          text: 'MDN: комбінатор дочірнього елемента (&gt;)',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/CSS/Child_combinator'
+        }
+      ]
+    },
+    {
+      title: 'Playwright Core',
+      icon: 'play',
+      intro: 'Четвертий модуль — ядро курсу: аудит локаторів з попереднього модуля перетворюється на тест-сьют, який клікає, вводить текст і перевіряє результат. Головна думка модуля: стабільність тесту важливіша за сам факт, що він пройшов. Нижче поради, як цього досягти.',
+      tips: [
+        {
+          title: 'Обирайте локатор за алгоритмом, зупиняючись на першому «так»',
+          body: [
+            'Ставте елементу питання по черзі:',
+            {
+              list: [
+                'чи має він роль і унікальне доступне ім\'я (текст або aria-label)? → <code>getByRole(\'button\', { name: ... })</code>;',
+                'чи це поле форми з видимим підписом? → <code>getByLabel(...)</code>;',
+                'чи має він унікальний id? → <code>page.locator(\'#email\')</code>;',
+                'чи має стабільний атрибут (type, name, aria-label)? → <code>page.locator(\'input[type="checkbox"]\')</code>;',
+                'чи унікальний він у межах батька, якого легко знайти? → ланцюжок <code>card.getByRole(\'button\')</code>;',
+                'нічого з переліченого → сигнал команді, що елемент важко тестувати.'
+              ]
+            },
+            'Останній пункт — теж корисна знахідка. Попросіть розробника додати id чи aria-label: йому це один рядок, вам години економії на підтримці, а користувачам — краща доступність.'
+          ]
+        },
+        {
+          title: 'Обходьтеся без force: true і жорстких затримок',
+          body: [
+            'Перед кожною дією Playwright сам перевіряє, що елемент видимий, стабільний і доступний для взаємодії. <code>force: true</code> вимикає ці перевірки, і тест може «клікнути» туди, куди користувач натиснути б не зміг. Такий тест зеленіє випадково.',
+            '<code>page.waitForTimeout()</code> з фіксованою паузою робить тест водночас повільним і нестабільним: на швидкій машині пауза зайва, на повільній її не вистачає. Покладайтеся на auto-waiting і веб-асершени, які самі чекають потрібного стану.'
+          ]
+        },
+        {
+          title: 'Підбирайте матчер під стабільність значення',
+          body: [
+            {
+              list: [
+                'статичний заголовок чи підпис кнопки → <code>toHaveText</code>;',
+                'текст із динамічною частиною (бейдж, ім\'я, дата) → <code>toContainText</code>;',
+                'кількість карток після пошуку чи фільтра → <code>toHaveCount</code>;',
+                'адреса з параметрами, що змінюються → <code>toHaveURL</code> з регулярним виразом;',
+                'адреса після дії, яка завжди веде на ту саму сторінку → <code>toHaveURL</code> з точним рядком;',
+                'дробове число (ціна, відсоток) → <code>toBeCloseTo(значення, точність)</code>.'
+              ]
+            },
+            'Одна подія — один тест. Якщо тест перевіряє і вхід, і додавання рецепта, то при падінні ви не знатимете одразу, що саме зламалося.'
+          ]
+        },
+        {
+          title: 'Спільну підготовку виносьте в beforeEach',
+          body: [
+            'Перехід на сторінку, який повторюється в кожному тесті, виносьте в <code>test.beforeEach</code> усередині <code>test.describe</code>:',
+            {
+              code: `test.describe(<span class="st">'Вхід у Tasteorama'</span>, () =&gt; {
+  test.beforeEach(<span class="kw">async</span> ({ page }) =&gt; {
+    <span class="kw">await</span> page.goto(<span class="st">'/auth/login'</span>);
+  });
+
+  test(<span class="st">'успішний вхід'</span>, <span class="kw">async</span> ({ page }) =&gt; { <span class="cm">/* ... */</span> });
+  test(<span class="st">'неправильний пароль'</span>, <span class="kw">async</span> ({ page }) =&gt; { <span class="cm">/* ... */</span> });
+});`
+            },
+            'Вхід один раз у <code>beforeAll</code> заради швидкості тут не спрацює. Playwright дає кожному тесту чистий контекст браузера, тож сесія з <code>beforeAll</code> не переживе перехід до наступного тесту.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Зелений тест на крихкому локаторі',
+        body: '<code>page.locator(\'div &gt; div &gt; form &gt; div:nth-child(2) &gt; input\')</code> може проходити тижнями, поки хтось не додасть у форму ще одне поле. Зелений тест ще не означає надійного тесту. Перевіряйте кожен локатор алгоритмом вище, навіть якщо він уже працює.'
+      },
+      links: [
+        {
+          text: 'Playwright: локатори',
+          url: 'https://playwright.dev/docs/locators'
+        },
+        {
+          text: 'Playwright: перевірки готовності елемента (actionability)',
+          url: 'https://playwright.dev/docs/actionability'
+        },
+        {
+          text: 'Playwright: асершени',
+          url: 'https://playwright.dev/docs/test-assertions'
+        },
+        {
+          text: 'Playwright: хуки test.describe, beforeEach, beforeAll',
+          url: 'https://playwright.dev/docs/api/class-test'
+        },
+        {
+          text: 'Playwright: найкращі практики',
+          url: 'https://playwright.dev/docs/best-practices'
+        }
+      ]
+    },
+    {
+      title: 'JavaScript Advanced',
+      icon: 'layers',
+      intro: 'П\'ятий модуль найбільший у курсі: тести з попереднього модуля перетворюються на архітектуру з хелперами, асинхронністю, класами й Page Object Model. Ось поради, які допоможуть зібрати цю архітектуру акуратно з першого разу.',
+      tips: [
+        {
+          title: 'Пишіть хелпери як чисті функції з параметром-об\'єктом',
+          body: [
+            'Хелпер для тестових даних має отримувати все потрібне через параметри й повертати новий об\'єкт, нічого не змінюючи зовні. Параметр-об\'єкт зі значеннями за замовчуванням дає змогу перевизначити лише те, що потрібно конкретному тесту:',
+            {
+              code: `<span class="cm">// приклад структури хелпера</span>
+<span class="kw">function</span> generateTestUser({ name = <span class="st">'Test User'</span>, password = <span class="st">'Test1234!'</span> } = {}) {
+  <span class="kw">return</span> {
+    name,
+    email: <span class="st">\`user_\${Date.now()}@test.com\`</span>, <span class="cm">// унікальна пошта</span>
+    password,
+  };
+}
+
+<span class="kw">const</span> user = generateTestUser({ name: <span class="st">'Olena'</span> });`
+            }
+          ]
+        },
+        {
+          title: 'Змінюйте копію, а базовий об\'єкт лишайте незмінним',
+          body: [
+            'Коли той самий базовий об\'єкт використовують кілька тестів, пряма зміна оригіналу в одному тесті псує дані для сусіднього. Створюйте копію через spread:',
+            {
+              code: '<span class="kw">const</span> invalidUser = { ...baseUser, password: <span class="st">\'\'</span> }; <span class="cm">// baseUser не змінився</span>'
+            },
+            'Хелпер перевіряйте з двох боків: форму об\'єкта — через <code>Object.keys()</code> і <code>typeof</code>, вміст — через <code>toEqual</code>.'
+          ]
+        },
+        {
+          title: 'Клік і очікування відповіді запускайте одночасно',
+          body: [
+            'Якщо клік спричиняє мережевий запит, який тест має перехопити, послідовний <code>await</code> ненадійний: відповідь може прийти раніше, ніж почнеться очікування. <code>Promise.all()</code> стартує обидві операції в один момент:',
+            {
+              code: `<span class="kw">const</span> [response] = <span class="kw">await</span> Promise.all([
+  page.waitForResponse((res) =&gt; res.url().includes(<span class="st">'/auth/login'</span>)),
+  submitButton.click(),
+]);`
+            },
+            'Порядок елементів у масиві визначає порядок результатів: <code>response</code> завжди відповідає першому елементу. На поведінку цей порядок не впливає, бо обидва виклики стартують одночасно. Якщо ж друга дія залежить від результату першої (вхід, а потім дія на новій сторінці), виконуйте їх послідовно.'
+          ]
+        },
+        {
+          title: 'У Page Object відкривайте назовні лише те, що потрібно тесту',
+          body: [
+            'Локатори оголошуйте в конструкторі класу. Внутрішню механіку ховайте в приватні поля (з префіксом <code>#</code>), а публічним лишайте те, що тест перевіряє напряму, наприклад повідомлення про помилку:',
+            {
+              code: `<span class="kw">class</span> LoginPage {
+  #emailInput;
+  #passwordInput;
+  #submitButton;
+
+  <span class="kw">constructor</span>(page) {
+    <span class="kw">this</span>.page = page;
+    <span class="kw">this</span>.#emailInput = page.getByLabel(<span class="st">'Email'</span>);
+    <span class="kw">this</span>.#passwordInput = page.getByLabel(<span class="st">'Password'</span>);
+    <span class="kw">this</span>.#submitButton = page.getByRole(<span class="st">'button'</span>, { name: <span class="st">'Увійти'</span> });
+    <span class="kw">this</span>.errorMessage = page.getByRole(<span class="st">'alert'</span>); <span class="cm">// читає тест — лишається публічним</span>
+  }
+
+  <span class="kw">async</span> login(email, password) {
+    <span class="kw">await</span> <span class="kw">this</span>.#emailInput.fill(email);
+    <span class="kw">await</span> <span class="kw">this</span>.#passwordInput.fill(password);
+    <span class="kw">await</span> <span class="kw">this</span>.#submitButton.click();
+  }
+}`
+            },
+            'Підписи полів у прикладі умовні: беріть локатори зі свого аудиту з попередніх модулів. Коли форма входу зміниться, правити доведеться лише клас, а тести залишаться як є.'
+          ]
+        }
+      ],
+      mistake: {
+        title: 'Забутий await або послідовне очікування',
+        body: 'Дві помилки модуля, які найчастіше дають нестабільні тести: забутий <code>await</code> перед асинхронною дією (тест іде далі, не дочекавшись результату) і послідовні клік та <code>waitForResponse</code>. Обидві проявляються «іноді», тому їх легко пропустити. Якщо тест падає не щоразу, першим ділом перевірте саме ці місця.'
+      },
+      links: [
+        {
+          text: 'Playwright: Page Object Model',
+          url: 'https://playwright.dev/docs/pom'
+        },
+        {
+          text: 'Playwright: page.waitForResponse()',
+          url: 'https://playwright.dev/docs/api/class-page#page-wait-for-response'
+        },
+        {
+          text: 'MDN: Promise.all()',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all'
+        },
+        {
+          text: 'MDN: приватні поля класу',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_properties'
+        },
+        {
+          text: 'MDN: spread-синтаксис',
+          url: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax'
+        }
+      ]
+    }
+  ]
+};
+</script>
+<script src="../_shared/recs.js"></script>
+</body>
+</html>
